@@ -367,13 +367,29 @@ def ondemand_demo():
 
 def coldestcore_demo():
     run(['{:.1f}GHz'.format(2.4), 'maxFreq', 'slowDVFS', 'coldestCore'], get_instance('parsec-blackscholes', 3, input_set='simsmall'))
+    
+def multi_threading1():
+    run(['2.4GHz', 'maxFreq', 'slowDVFS'], get_instance('parsec-blackscholes', 1, input_set='simsmall'))
+
+def multi_threading2():
+    run(['2.4GHz', 'maxFreq', 'slowDVFS'], get_instance('parsec-blackscholes', 2, input_set='simsmall'))
+
+def multi_threading3():
+    run(['2.4GHz', 'maxFreq', 'slowDVFS'], get_instance('parsec-blackscholes', 3, input_set='simsmall'))
+    
+def multi_threading4():
+    run(['2.4GHz', 'maxFreq', 'slowDVFS'], get_instance('parsec-blackscholes', 4, input_set='simsmall'))
              
 def main():
     # example()
     # ondemand_demo()
-    coldestcore_demo()
+    # coldestcore_demo()
     # test_static_power()
     # multi_program()
+    #multi_threading1()
+    multi_threading2()
+    #multi_threading3()
+    #multi_threading4()
 
     # example_symmetric_perforation()
     # example_asymmetric_perforation()
