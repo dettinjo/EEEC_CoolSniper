@@ -365,8 +365,7 @@ def test_static_power():
 def ondemand_demo():
     run(['{:.1f}GHz'.format(4), 'ondemand', 'fastDVFS'], get_instance('parsec-blackscholes', 3, input_set='simsmall'))
 
-def coldestcore_demo():
-    run(['{:.1f}GHz'.format(2.4), 'maxFreq', 'slowDVFS', 'coldestCore'], get_instance('parsec-blackscholes', 3, input_set='simsmall'))
+
     
 def multi_threading1():
     run(['2.4GHz', 'maxFreq', 'slowDVFS'], get_instance('parsec-blackscholes', 1, input_set='simsmall'))
@@ -379,15 +378,23 @@ def multi_threading3():
     
 def multi_threading4():
     run(['2.4GHz', 'maxFreq', 'slowDVFS'], get_instance('parsec-blackscholes', 4, input_set='simsmall'))
-             
+
+
+def coldestcore_demo():
+    run(['{:.1f}GHz'.format(4), 'maxFreq', 'ondemand', 'coldestCore'], get_instance('parsec-blackscholes', 3, input_set='simsmall'))
+
+def global_power_multiplexing():
+    run(['{:.1f}GHz'.format(4), 'maxFreq', 'ondemand', 'globalPowerMultiplexing'], get_instance('parsec-blackscholes', 3, input_set='simsmall'))
+
 def main():
+    global_power_multiplexing()
     # example()
     # ondemand_demo()
     # coldestcore_demo()
     # test_static_power()
-    # multi_program()
+    # multi_program()s
     #multi_threading1()
-    multi_threading2()
+    # multi_threading2()
     #multi_threading3()
     #multi_threading4()
 

@@ -20,6 +20,7 @@
 #include "policies/mapFirstUnused.h"
 #include "policies/dvfsOndemand.h"
 #include "policies/coldestCore.h"
+#include "policies/globalPowerMultiplexing.h"
 
 #include <iomanip>
 #include <random>
@@ -304,7 +305,7 @@ void SchedulerOpen::initMappingPolicy(String policyName) {
  * Initialize the DVFS policy to the policy with the given name
  */
 void SchedulerOpen::initDVFSPolicy(String policyName) {
-	cout << "[Scheduler] [Info]: Initializing DVFS policy" << endl;
+	cout << "[Scheduler] [Info]: Initializing DVFS policy " << policyName << endl;
 	if (policyName == "off") {
 		dvfsPolicy = NULL;
 	} else if (policyName == "maxFreq") {
@@ -349,6 +350,13 @@ void SchedulerOpen::initDVFSPolicy(String policyName) {
 			"scheduler/open/migration/coldestCore/criticalTemperature");
 			mappingPolicy = new ColdestCore(performanceCounters, coreRows,
 			coreColumns, criticalTemperature);
+	} else if (policyName == "globalPowerMultiplexing") {
+		float criticalTemperature = Sim()->getCfg()->getFloat(
+		"scheduler/open/migration/globalPowerMultiplexing/criticalTemperature");
+		SubsecondTime migrationInterval = SubsecondTime::NS(Sim()->getCfg()->getInt(
+		"scheduler/open/migration/globalPowerMultiplexing/migrationInterval"));
+		mappingPolicy = new GlobalPowerMultiplexing(performanceCounters, coreRows,
+		coreColumns, criticalTemperature, migrationInterval);
 	} else {
 		cout << "\n[Scheduler] [Error]: Unknown DVFS Algorithm" << endl;
  		exit (1);
@@ -359,7 +367,7 @@ void SchedulerOpen::initDVFSPolicy(String policyName) {
  * Initialize the migration policy to the policy with the given name
  */
 void SchedulerOpen::initMigrationPolicy(String policyName) {
-	cout << "[Scheduler] [Info]: Initializing migration policy" << endl;
+	cout << "[Scheduler] [Info]: Initializing migration policy " << policyName << endl;
 	if (policyName == "off") {
 		migrationPolicy = NULL;
 	} //else if (policyName ="XYZ") {... } //Place to instantiate a new migration logic. Implementation is put in "policies" package.
@@ -368,8 +376,14 @@ void SchedulerOpen::initMigrationPolicy(String policyName) {
 		"scheduler/open/migration/coldestCore/criticalTemperature");
 		migrationPolicy = new ColdestCore(performanceCounters, coreRows,
 		coreColumns, criticalTemperature);
-		}
-	else {
+	} else if (policyName == "globalPowerMultiplexing") {
+		float criticalTemperature = Sim()->getCfg()->getFloat(
+		"scheduler/open/migration/globalPowerMultiplexing/criticalTemperature");
+		SubsecondTime migrationInterval = SubsecondTime::NS(Sim()->getCfg()->getInt(
+		"scheduler/open/migration/globalPowerMultiplexing/migrationInterval"));
+		migrationPolicy = new GlobalPowerMultiplexing(performanceCounters, coreRows,
+		coreColumns, criticalTemperature, migrationInterval);
+	} else {
 		cout << "\n[Scheduler] [Error]: Unknown Migration Algorithm" << endl;
  		exit (1);
 	}
