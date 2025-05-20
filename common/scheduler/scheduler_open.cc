@@ -21,6 +21,7 @@
 #include "policies/dvfsOndemand.h"
 #include "policies/coldestCore.h"
 #include "policies/globalPowerMultiplexing.h"
+#include "policies/dvfsML.h"
 
 #include <iomanip>
 #include <random>
@@ -345,7 +346,29 @@ void SchedulerOpen::initDVFSPolicy(String policyName) {
 		dtmCriticalTemperature,
 		dtmRecoveredTemperature
 		);
-	}  else if (policyName == "coldestCore") {
+	} else if (policyName == "ml") {
+		float upThreshold = Sim()->getCfg()->getFloat(
+		"scheduler/open/dvfs/ml/up_threshold");
+		float downThreshold = Sim()->getCfg()->getFloat(
+		"scheduler/open/dvfs/ml/down_threshold");
+		float dtmCriticalTemperature = Sim()->getCfg()->getFloat(
+		"scheduler/open/dvfs/ml/dtm_cricital_temperature");
+		float dtmRecoveredTemperature = Sim()->getCfg()->getFloat(
+		"scheduler/open/dvfs/ml/dtm_recovered_temperature");
+		dvfsPolicy = new DVFSML(
+		performanceCounters,
+		coreRows,
+		coreColumns,
+		minFrequency,
+		maxFrequency,
+		frequencyStepSize,
+		upThreshold,
+		downThreshold,
+		dtmCriticalTemperature,
+		dtmRecoveredTemperature
+		);
+
+	} else if (policyName == "coldestCore") {
 			float criticalTemperature = Sim()->getCfg()->getFloat(
 			"scheduler/open/migration/coldestCore/criticalTemperature");
 			mappingPolicy = new ColdestCore(performanceCounters, coreRows,

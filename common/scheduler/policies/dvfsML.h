@@ -14,6 +14,9 @@ struct MLData {
     std::vector<float> currTemperatures;
     std::vector<int> currFrequencies;
     std::vector<float> currPowers;
+    std::vector<float> currUtilizations;
+    std::vector<float> prevPowers;
+    std::vector<float> prevUtilizations;
     bool inThrottleMode;
 };
 
@@ -43,6 +46,9 @@ class DVFSML : public DVFSPolicy {
     bool throttle();
     MLData collectMLData(const std::vector<int> &oldFrequencies);
     std::vector<float> prevTemperatures;
+    std::vector<float> prevPowers;
+    std::vector<float> prevUtilizations;
     std::ofstream csvFile;
+    static double overheadTime; // New field to save overhead time
 };
 #endif

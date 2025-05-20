@@ -333,30 +333,7 @@ def example_asymmetric_perforation():
                     perforation_script='magic_perforation_rate:%s' % ','.join(loop_rates))
 
 
-def multi_program():
-    # In this example, two instances of blackscholes will be scheduled.
-    # By setting the scheduler/open/arrivalRate base.cfg parameter to 2, the
-    # tasks can be set to arrive at the same time.
 
-    input_set = 'simsmall'
-    base_configuration = ['4.0GHz', "maxFreq"]
-    benchmark_set = (
-        'parsec-blackscholes',
-        'parsec-x264',
-    )
-
-    if ENABLE_HEARTBEATS == True:
-        base_configuration.append('hb_enabled')
-
-    benchmarks = ''
-    for i, benchmark in enumerate(benchmark_set):
-        min_parallelism = get_feasible_parallelisms(benchmark)[0]
-        if i != 0:
-            benchmarks = benchmarks + ',' + get_instance(benchmark, min_parallelism, input_set)
-        else:
-            benchmarks = benchmarks + get_instance(benchmark, min_parallelism, input_set)
-
-    run(base_configuration, benchmarks)
 
     
 def test_static_power():
@@ -382,15 +359,58 @@ def multi_threading4():
 
 def coldestcore_demo():
     run(['{:.1f}GHz'.format(4), 'maxFreq', 'ondemand', 'coldestCore'], get_instance('parsec-blackscholes', 3, input_set='simsmall'))
+    run(['{:.1f}GHz'.format(4), 'maxFreq', 'ondemand', 'coldestCore'], get_instance('parsec-streamcluster', 3, input_set='simsmall'))
 
 def global_power_multiplexing():
-    run(['{:.1f}GHz'.format(4), 'maxFreq', 'ondemand', 'globalPowerMultiplexing'], get_instance('parsec-blackscholes', 3, input_set='simsmall'))
+    run(['{:.1f}GHz'.format(4), 'maxFreq', 'ml', 'globalPowerMultiplexing'], get_instance('parsec-streamcluster', 3, input_set='simsmall'))
+    # run(['{:.1f}GHz'.format(4), 'maxFreq', 'ml', 'globalPowerMultiplexing'], get_instance('parsec-blackscholes', 3, input_set='simsmall'))
+    # run(['{:.1f}GHz'.format(4), 'maxFreq', 'ml', 'globalPowerMultiplexing'], get_instance('parsec-streamcluster', 3, input_set='simsmall'))
+
+    # run(['{:.1f}GHz'.format(4), 'maxFreq', 'ml', 'globalPowerMultiplexing'], get_instance('parsec-blackscholes', 3, input_set='simsmall'))
+    # run(['{:.1f}GHz'.format(4), 'maxFreq', 'ml'], get_instance('parsec-canneal', 3, input_set='simsmall'))
+    #                     #("parsec-streamcluster", 2),
+    #                     #("parsec-swaptions", 2),
+    #                     #("parsec-x264", 6),
+    #                     #("parsec-canneal", 3),
+
+
+def multi_program():
+    # In this example, two instances of blackscholes will be scheduled.
+    # By setting the scheduler/open/arrivalRate base.cfg parameter to 2, the
+    # tasks can be set to arrive at the same time.
+
+    input_set = 'simsmall'
+    #base_configuration = ['4.0GHz', "maxFreq", "ondemand", "coldestCore"]
+    base_configuration = ['4.0GHz', 'maxFreq', 'ml', 'globalPowerMultiplexing']#, 'globalPowerMultiplexing']
+    benchmark_set = (
+        'parsec-blackscholes',
+        'parsec-streamcluster',
+        # "parsec-bodytrack",
+        # "parsec-swaptions",
+        # "parsec-x264",
+        # "parsec-canneal"
+
+    )
+
+    if ENABLE_HEARTBEATS == True:
+        base_configuration.append('hb_enabled')
+
+    benchmarks = ''
+    for i, benchmark in enumerate(benchmark_set):
+        min_parallelism = get_feasible_parallelisms(benchmark)[0]
+        if i != 0:
+            benchmarks = benchmarks + ',' + get_instance(benchmark, min_parallelism, input_set)
+        else:
+            benchmarks = benchmarks + get_instance(benchmark, min_parallelism, input_set)
+
+    run(base_configuration, benchmarks)
 
 def main():
-    global_power_multiplexing()
+    multi_program()
+    #global_power_multiplexing()
     # example()
     # ondemand_demo()
-    # coldestcore_demo()
+    #coldestcore_demo()
     # test_static_power()
     # multi_program()s
     #multi_threading1()

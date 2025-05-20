@@ -77,11 +77,12 @@ std::vector<migration> GlobalPowerMultiplexing::migrate(
 
 int GlobalPowerMultiplexing::getColdestCore(const std::vector<bool> &availableCores) {
     int coldestCore = -1;
-    float coldestTemperature = std::numeric_limits<float>::max();
+    float coldestTemperature = 0;
+    // iterate all cores to find coldest
     for (int c = 0; c < coreRows * coreColumns; c++) {
         if (availableCores.at(c)) {
             float temperature = performanceCounters->getTemperatureOfCore(c);
-            if (temperature < coldestTemperature) {
+            if ((coldestCore == -1) || (temperature < coldestTemperature)) {
                 coldestCore = c;
                 coldestTemperature = temperature;
             }

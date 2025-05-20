@@ -2,8 +2,8 @@
 
 #include <iomanip>
 #include <iostream>
-#include <fstream>
 #include <sstream>
+#include <cstdlib>
 using namespace std;
 
 DVFSML::DVFSML(const PerformanceCounters *performanceCounters,
@@ -23,41 +23,49 @@ DVFSML::DVFSML(const PerformanceCounters *performanceCounters,
       dtmCriticalTemperature(dtmCriticalTemperature),
       dtmRecoveredTemperature(dtmRecoveredTemperature) {
     prevTemperatures.resize(coreRows * coreColumns, 0.0f);
-    
-    // Open CSV file for writing
-    csvFile.open("dvfs_ml_data.csv");
-    if (csvFile.is_open()) {
-        csvFile << "Core,Power,Frequency,Temperature,Utilization,InThrottleMode" << endl;
-    } else {
-        cerr << "Error: Unable to open CSV file for writing." << endl;
-    }
+    prevPowers.resize(coreRows * coreColumns, 0.0f);
+    prevUtilizations.resize(coreRows * coreColumns, 0.0f);
 }
 
 std::vector<int> DVFSML::getFrequencies(
     const std::vector<int> &oldFrequencies,
     const std::vector<bool> &activeCores) {
     MLData mlData = collectMLData(oldFrequencies);
+
+    int in_throttle_mode = 0;
+    std::stringstream ss;
+
+    for (unsigned int coreCounter = 0; coreCounter < coreRows * coreColumns; coreCounter++) {
+        float power = mlData.currPowers[coreCounter];
+        float temperature = mlData.currTemperatures[coreCounter];
+        float utilization = performanceCounters->getUtilizationOfCore(coreCounter);
+        int frequency = oldFrequencies[coreCounter];
+
+        if (coreCounter > 0) ss << ",";
+        ss << power << "," << frequency << "," << temperature << "," << utilization;
+    }
+
+    std::string command = "/home/cartman/Projects/DVFSML/dvfsml --data \"" + ss.str() + "\"";
     
-    if (throttle()) {
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        cerr << "Error: popen() failed!" << endl;
+        return oldFrequencies;
+    }
+
+    char buffer[128];
+    std::string result = "";
+    while(!feof(pipe)) {
+        if(fgets(buffer, 128, pipe) != NULL)
+            result += buffer;
+    }
+    pclose(pipe);
+
+    in_throttle_mode = std::stoi(result);
+
+    if (in_throttle_mode == 1) {
         std::vector<int> minFrequencies(coreRows * coreColumns, minFrequency);
         cout << "[Scheduler][ML-DTM]: in throttle mode -> return min. frequencies " << endl;
-        
-        // Collect data even in throttle mode
-        for (unsigned int coreCounter = 0; coreCounter < coreRows * coreColumns; coreCounter++) {
-            float power = mlData.currPowers[coreCounter];
-            float temperature = mlData.currTemperatures[coreCounter];
-            float utilization = performanceCounters->getUtilizationOfCore(coreCounter);
-            
-            if (csvFile.is_open()) {
-                csvFile << coreCounter << ","
-                        << power << ","
-                        << minFrequency << ","
-                        << temperature << ","
-                        << utilization << ","
-                        << "1" << endl;  // 1 indicates in throttle mode
-            }
-        }
-        
         return minFrequencies;
     } else {
         std::vector<int> frequencies(coreRows * coreColumns);
@@ -78,18 +86,6 @@ std::vector<int> DVFSML::getFrequencies(
                 cout << " utilization=" << fixed << setprecision(3)
                      << utilization << endl;
                 
-                // Save data to CSV file
-                if (csvFile.is_open()) {
-                    csvFile << coreCounter << ","
-                            << power << ","
-                            << frequency << ","
-                            << temperature << ","
-                            << utilization << ","
-                            << "0" << endl;  // 0 indicates not in throttle mode
-                }
-                
-                // ML-based decision logic would go here
-                // For now, we'll use a simplified version of the ondemand logic
                 if (utilization > upThreshold) {
                     cout << "[Scheduler][ML]: utilization > upThreshold";
                     if (frequency == maxFrequency) {
@@ -142,6 +138,8 @@ bool DVFSML::throttle() {
 MLData DVFSML::collectMLData(const std::vector<int> &oldFrequencies) {
     MLData data;
     data.prevTemperatures = prevTemperatures;
+    data.prevPowers = prevPowers;
+    data.prevUtilizations = prevUtilizations;
     data.currTemperatures.resize(coreRows * coreColumns);
     data.currFrequencies = oldFrequencies;
     data.currPowers.resize(coreRows * coreColumns);
@@ -153,11 +151,11 @@ MLData DVFSML::collectMLData(const std::vector<int> &oldFrequencies) {
     }
 
     prevTemperatures = data.currTemperatures;
+    prevPowers = data.currPowers;
+    for (unsigned int coreCounter = 0; coreCounter < coreRows * coreColumns; coreCounter++) {
+        prevUtilizations[coreCounter] = performanceCounters->getUtilizationOfCore(coreCounter);
+    }
     return data;
 }
 
-DVFSML::~DVFSML() {
-    if (csvFile.is_open()) {
-        csvFile.close();
-    }
-}
+DVFSML::~DVFSML() {}
